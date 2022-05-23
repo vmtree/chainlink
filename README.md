@@ -42,7 +42,7 @@ mkdir ~/.chainlink
 
 #### Set password and GUI credentials (use different values)
 ```
-echo "passwordgoesHERE666###" > ~/.chainlink/.password
+echo "passwordgoesHERE123###" > ~/.chainlink/.password
 echo "admin@chain.link" > ~/.chainlink/.api
 echo "passwordgoesHERE" >> ~/.chainlink/.api
 ```
