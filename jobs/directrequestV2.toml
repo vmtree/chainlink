@@ -1,0 +1,49 @@
+type = "directrequest"
+schemaVersion = 1
+name = "Arborist Direct Request V2"
+externalJobID = "0badc0de-0bad-c0de-0bad-c0de0badc0de"
+maxTaskDuration = "30s"
+contractAddress = "0xdd07fB4b59083d26F216f35CCDb18866E98e9762"
+minIncomingConfirmations = 0
+observationSource = """
+    decode_log [type="ethabidecodelog"
+                abi="OracleRequest(bytes32 indexed specId, address requester, bytes32 requestId, uint256 payment, address callbackAddr, bytes4 callbackFunctionId, uint256 cancelExpiration, uint256 dataVersion, bytes data)"
+                data="$(jobRun.logData)"
+                topics="$(jobRun.logTopics)"]
+
+    check_data [type="ethabiencode"
+                abi="(bytes4 selector)"
+                data="{\\"selector\\": $(decode_log.callbackFunctionId)}"]
+
+    check_call [type="ethcall"
+                failEarly=true
+                extractRevertReason=true
+                contract="$(decode_log.requester)"
+                data="$(check_data)"]
+
+    send_bridge [type="bridge"
+                 name="vmt"
+                 timeout="20s"
+                 requestData="{\\"data\\": {\\"rawData\\": $(check_call)}}"]
+
+    parse_proof [type="jsonparse"
+                 path="data,proof"
+                 data="$(send_bridge)"]
+
+    parse_trees [type="jsonparse"
+                 path="data,newFilledSubtrees"
+                 data="$(send_bridge)"]
+
+    encode_data [type="ethabiencode"
+                 abi="performMassUpdate(uint256[8] memory proof, uint256[20] memory newFilledSubtrees)"
+                 data="{ \\"proof\\": $(parse_proof), \\"newFilledSubtrees\\": $(parse_trees)}"]
+
+    submit_tree [type="ethtx"
+                 to="$(decode_log.requester)"
+                 data="$(encode_data)"
+                 gasLimit=1500000]
+
+    decode_log -> check_data -> check_call -> send_bridge -> parse_proof -> encode_data
+    send_bridge -> parse_trees -> encode_data
+    encode_data -> submit_tree
+"""
