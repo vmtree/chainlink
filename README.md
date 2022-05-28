@@ -70,9 +70,15 @@ export $(grep -v '^#' ~/.chainlink/.env | xargs)
 docker-compose up -d
 ```
 
+After it's running, login to the node and add a bridge with the name `"vmt"` that points to your external adapter. Then, you can add the [job specification](./jobs/directrequestV2.toml) that listens to the Arborist contract for oracle requests. Of course, don't forget to fund your node with ETH.
 
 # Environment Directory
 Some sample .env files which the current node solution is based on.
 
 # Jobs Directory
-Contains toml job specs of the external adapters.
+Contains toml job specs of the external adapters. Chainlink job spec v2 uses DAGs for task pipelines, which is a welcome change from the previous JSON specs.
+
+## Arborist Direct Request V2
+- [jobspec](./jobs/directrequestV2.toml)
+
+This job specification details the tasks that the Chainlink node executes during a VMTree update. I had to improvise with this job spec, because I was having some trouble with the values that the Chainlink node was sending to the external adapter. This job spec sends the raw bytes data that it gets from the `checkMassUpdate` function call, and the external adapter does manual abi decoding to retrieve the value. The reason is because the Chainlink node (when it did the `decode_call` task) was sending floats instead of `uint256` words, so instead of getting a full length evm word, the external adapter was getting values like "1.5123123E12". I think the right solution is to use the Chainlink node for decoding, but to decode with `bytes32` instead of `uint256`, but I hacked together some other stuff instead with a buffer and manually indexing the values.
