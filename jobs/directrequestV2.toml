@@ -18,12 +18,12 @@ observationSource = """
     check_call [type="ethcall"
                 failEarly=true
                 extractRevertReason=true
-                contract="$(decode_log.requester)"
+                contract="$(decode_log.callbackAddr)"
                 data="$(check_data)"]
 
     send_bridge [type="bridge"
                  name="vmt"
-                 timeout="20s"
+                 timeout="30s"
                  requestData="{\\"data\\": {\\"rawData\\": $(check_call)}}"]
 
     parse_proof [type="jsonparse"
@@ -39,7 +39,7 @@ observationSource = """
                  data="{ \\"proof\\": $(parse_proof), \\"newFilledSubtrees\\": $(parse_trees)}"]
 
     submit_tree [type="ethtx"
-                 to="$(decode_log.requester)"
+                 to="$(decode_log.callbackAddr)"
                  data="$(encode_data)"
                  gasLimit=1500000]
 

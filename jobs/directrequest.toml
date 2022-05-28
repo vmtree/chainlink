@@ -1,6 +1,6 @@
 type = "directrequest"
 schemaVersion = 1
-name = "Arborist Direct Request V2"
+name = "Arborist Direct Request"
 externalJobID = "0badc0de-0bad-c0de-0bad-c0de0badc0de"
 maxTaskDuration = "30s"
 contractAddress = "0xdd07fB4b59083d26F216f35CCDb18866E98e9762"
@@ -18,7 +18,7 @@ observationSource = """
     check_call [type="ethcall"
                 failEarly=true
                 extractRevertReason=true
-                contract="$(decode_log.requester)"
+                contract="$(decode_log.callbackAddr)"
                 data="$(check_data)"]
 
     decode_call [type="ethabidecode"
@@ -27,7 +27,7 @@ observationSource = """
 
     send_bridge [type="bridge"
                  name="vmt"
-                 timeout="20s"
+                 timeout="30s"
                  requestData="{\\"data\\": {\\"leaves\\": $(decode_call.leaves), \\"filledSubtrees\\": $(decode_call.filledSubtrees), \\"startIndex\\": $(decode_call.startIndex)}}"]
 
     parse_proof [type="jsonparse"
@@ -43,7 +43,7 @@ observationSource = """
                  data="{ \\"proof\\": $(parse_proof), \\"newFilledSubtrees\\": $(parse_trees)}"]
 
     submit_tree [type="ethtx"
-                 to="$(decode_log.tree)"
+                 to="$(decode_log.callbackAddr)"
                  data="$(encode_data)"]
 
     decode_log -> check_data -> check_call -> decode_call -> send_bridge -> parse_proof -> encode_data
